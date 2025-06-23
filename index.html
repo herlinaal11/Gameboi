@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Edukasi - Belajar Sambil Bermain</title>
+    <link rel="stylesheet" href="styling.css">
+
+</head>
+
+<body>
+    <script src="backend.js"></script>
+    <button class="btn-help" onclick="openModal()">
+        📖 Cara Bermain
+    </button>
+    <div class="container">
+
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active">
+            <h1>🎮 Game Edukasi Belajar 🎮</h1>
+            <p style="font-size: 18px; margin-bottom: 30px;">Selamat datang! Mari belajar sambil bermain dengan
+                menyenangkan!</p>
+
+            <div class="input-group">
+                <label for="player-name">Masukkan Nama Kamu:</label>
+                <input type="text" id="player-name" placeholder="Tulis nama kamu di sini..." maxlength="20">
+            </div>
+
+            <button class="btn" onclick="startGame()">🚀 Mulai Bermain</button>
+        </div>
+
+
+
+        <!-- Main Menu -->
+        <div id="main-menu" class="screen">
+
+            <button class="logout-btn" onclick="logout()">
+                🚪 Log out
+            </button>
+
+            <h1>Halo, <span id="player-name-display"></span>! 👋</h1>
+            <p style="margin-bottom: 30px;">Pilih permainan yang ingin kamu mainkan:</p>
+
+            <div class="game-menu">
+
+                <div class="game-card" onclick="selectGame('concentration')">
+                    <h3>🎯 Konsentrasi & Fokus</h3>
+                    <p>Latih konsentrasi dengan mengikuti pola warna yang muncul</p>
+                    <div class="level-indicator">Level: <span id="concentration-level">1</span>/5</div>
+                </div>
+
+                <div class="game-card" id="shapes-card" onclick="selectGame('shapes')">
+                    <h3>🔷 Bentuk & Warna</h3>
+                    <p>Seret dan letakkan bentuk sesuai dengan tempatnya</p>
+                    <div class="level-indicator">Level: <span id="shapes-level">1</span>/10</div>
+                </div>
+
+                <div class="game-card" id="letters-card" onclick="selectGame('letters')">
+                    <h3>🔤 Huruf & Angka</h3>
+                    <p>Belajar mengenal huruf dan angka dengan menyenangkan</p>
+                    <div class="level-indicator">Level: <span id="letters-level">1</span>/10</div>
+                </div>
+
+                <div class="game-card" id="tracing-card" onclick="selectGame('tracing')">
+                    <h3>✍️ Mengikuti Garis</h3>
+                    <p>Ikuti garis putus-putus untuk membentuk pola, huruf, dan angka</p>
+                    <div class="level-indicator">Level: <span id="letters-level">1</span>/10</div>
+                </div>
+
+            </div>
+            <button class="btn" onclick="showResults()">📊 Lihat Hasil</button>
+        </div>
+
+        <!-- Concentration Game -->
+        <div id="concentration-game" class="screen">
+            <h2>🎯 Game Konsentrasi - Level <span id="current-concentration-level">1</span></h2>
+            <p>Tekan lingkaran yang menyala! Mudah dan menyenangkan! 😊</p>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="concentration-progress"></div>
+            </div>
+
+            <div class="game-area">
+                <div class="concentration-game">
+                    <div id="instruction-text"
+                        style="font-size: 24px; color: #667eea; margin-bottom: 20px; font-weight: bold;">
+                        Tekan tombol "🌟 Mulai" untuk memulai!
+                    </div>
+                    <div id="circles-container"></div>
+                    <div style="margin-top: 30px;">
+                        <button class="btn" id="start-sequence-btn" onclick="startSequence()">🌟 Mulai</button>
+                        <button class="btn" onclick="backToMenu()">🏠 Kembali</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shapes Game -->
+        <div id="shapes-game" class="screen">
+            <h2>🔷 Game Bentuk - Level <span id="current-shapes-level">1</span></h2>
+            <p>Seret bentuk ke tempat yang sesuai!</p>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="shapes-progress"></div>
+            </div>
+
+            <div class="game-area">
+                <div id="shapes-container" class="shapes-container"></div>
+                <div id="drop-zones-container" class="shapes-container"></div>
+                <div style="margin-top: 30px;">
+                    <button class="btn" onclick="resetShapesLevel()">🔄 Ulangi</button>
+                    <button class="btn" onclick="backToMenu()">🏠 Kembali</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Letters Game -->
+        <div id="letters-game" class="screen">
+            <h2>🔤 Game Huruf & Angka - Level <span id="current-letters-level">1</span></h2>
+            <p id="letters-instruction">Klik huruf atau angka yang diminta!</p>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="letters-progress"></div>
+            </div>
+
+            <div class="game-area">
+                <div id="target-display"
+                    style="font-size: 3em; margin-bottom: 30px; font-weight: bold; color: #667eea;">
+                </div>
+                <div id="letters-container" class="letters-numbers"></div>
+                <div style="margin-top: 30px;">
+                    <div class="bottom-buttons">
+                        <button class="btn" onclick="backToMenu()">🏠 Kembali</button>
+                        <button class="belajar-btn" onclick="openLearningModal()">📚 Belajar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="screen">
+            <h1>📊 Hasil Permainan</h1>
+            <div id="results-content"></div>
+            <button class="btn" onclick="backToMenu()">🏠 Kembali ke Menu</button>
+            <button class="btn" onclick="resetAllProgress()">🔄 Mulai Ulang</button>
+            <button class="btn" onclick="showProgressHistory()">📊 Progress</button>
+        </div>
+
+
+
+
+        <div id="historyDisplay"></div>
+
+        <!-- Timer Display -->
+        <div id="timer" class="timer" style="display: none;">
+            ⏱️ <span id="timer-display">00:00</span>
+        </div>
+
+        <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+            <div class="modal-content" id="modalContent" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h2 class="modal-title">🎯 Cara Bermain Game</h2>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="instructions-content">
+                        <div class="instruction-item">
+                            <span class="instruction-number">1</span>
+                            <strong>Level 1-5:</strong> Pemain wajib menyelesaikan game pertama yaitu konsentrasi dan
+                            fokus
+                            level 1 sampai 5
+                        </div>
+
+                        <div class="instruction-item">
+                            <span class="instruction-number">2</span>
+                            <strong>Konsentrasi & Fokus:</strong> Pada game konsentrasi dan fokus pemain diminta memilih
+                            tombol mana yang menyala oleh karna itu harus fokus pada layar saat bermain
+                        </div>
+
+                        <div class="instruction-item">
+                            <span class="instruction-number">3</span>
+                            <strong>Lanjut ke Game 2-3:</strong> Setelah menyelesaikan Game pertama pemain dapat memilih
+                            mencoba game 2 atau 3 terlebih dahulu
+                        </div>
+
+                        <div class="instruction-item">
+                            <span class="instruction-number">4</span>
+                            <strong>Pencocokan Warna:</strong> Game kedua berisi pencocokan pada bentuk dan warna dengan
+                            menarik objek yang berada di atas pindahkan ke dalam kotak
+                        </div>
+
+                        <div class="instruction-item">
+                            <span class="instruction-number">5</span>
+                            <strong>Pengenalan Huruf:</strong> Game ketiga berisi pengenalan huruf dan angka melalui
+                            bentuk
+                            dengan memilih yang sama dengan soal
+                        </div>
+
+                        <div class="instruction-item">
+                            <span class="instruction-number">6</span>
+                            <strong>Kembali ke Menu:</strong> Saat game dimulai pemain bisa kembali ke halaman menu
+                            tetapi
+                            waktu akan ke reset otomatis atau akan dihitung ulang saat bermain kembali
+                        </div>
+
+                        <div class="instruction-item">
+                            <span class="instruction-number">7</span>
+                            <strong>Hasil Permainan:</strong> Jika sudah menyelesaikan semua pemain bisa melihat hasil
+                            permainan dengan mengklik tombol yang ada di bawah
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="scroll-hint">
+                        <span class="scroll-arrow">↕️</span> Scroll untuk melihat semua petunjuk
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Learning Modal -->
+        <div id="learningModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeLearningModal()">&times;</span>
+                <h2 class="modal-title">🎓 Mari Belajar Huruf & Angka!</h2>
+
+                <div class="learning-section">
+                    <h3 class="section-title">🔤 Huruf A - Z</h3>
+                    <div class="learning-grid" id="lettersGrid"></div>
+                </div>
+
+                <div class="learning-section">
+                    <h3 class="section-title">🔢 Angka 0 - 9</h3>
+                    <div class="learning-grid" id="numbersGrid"></div>
+                </div>
+            </div>
+        </div>
+</body>
+
+</html>
