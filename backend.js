@@ -1,10 +1,9 @@
 // Game State
 let playerName = '';
 let gameState = {
-    concentration: { level: 1, completed: false, times: [] },
+    concentration: { level: 1, completed: false, times: [], locked: false },
     shapes: { level: 1, completed: false, times: [], locked: true },
-    letters: { level: 1, completed: false, times: [], locked: true },
-    tracing: { level: 1, completed: false, times: [], locked: true }
+    letters: { level: 1, completed: false, times: [], locked: true }
 };
 
 let currentGame = '';
@@ -135,10 +134,11 @@ function updateUI() {
     document.getElementById('shapes-level').textContent = gameState.shapes.level;
     document.getElementById('letters-level').textContent = gameState.letters.level;
 
+
     // Lock/unlock games
     const shapesCard = document.getElementById('shapes-card');
     const lettersCard = document.getElementById('letters-card');
-    const tracingCard = document.getElementById('tracing-card');
+
 
     if (shapesCard) {
         if (gameState.shapes.locked) {
@@ -159,14 +159,9 @@ function updateUI() {
     }
 
 
-    if (gameState.tracing.locked) {
-        lettersCard.classList.add('locked');
-        lettersCard.onclick = null;
-    } else {
-        lettersCard.classList.remove('locked');
-        lettersCard.onclick = () => selectGame('tracing');
-    }
 }
+
+
 
 // Select game
 function selectGame(game) {
@@ -190,10 +185,7 @@ function selectGame(game) {
             showScreen('letters-game');
             setupLettersGame();
             break;
-        case 'tracing':
-            showScreen('tracing-game');
-            setupLettersGame();
-            break;
+
     }
 }
 
@@ -216,7 +208,7 @@ function setupConcentrationGame() {
         { emoji: '🍇', name: 'anggur', color: '#9c27b0' },
         { emoji: '🍓', name: 'strawberry', color: '#e91e63' },
         { emoji: '🥝', name: 'kiwi', color: '#8bc34a' },
-        { emoji: '🍑', name: 'cherry', color: '#f44336' },
+        { emoji: '🍑', name: 'peach', color: '#f44336' },
         { emoji: '🍒', name: 'cherry merah', color: '#e91e63' }
     ];
 
@@ -533,15 +525,17 @@ function setupShapesGame() {
     updateProgress('shapes', level);
 
     const shapes = [
-        { name: '🍎', color: '#ff6b6b', shape: 'circle' },
-        { name: '🚙', color: '#4ecdc4', shape: 'circle' },
+        { name: '🍎', color: '#ff6b6b', shape: 'Appel' },
+        { name: '🚙', color: '#4ecdc4', shape: 'Car' },
         { name: '🟢', color: '#48bb78', shape: 'circle' },
-        { name: '🐯', color: '#feca57', shape: 'circle' },
-        { name: '🌹', color: '#ff9ff3', shape: 'diamond' },
-        { name: '🔷', color: '#45b7d1', shape: 'diamond' }
+        { name: '🐯', color: '#feca57', shape: 'Tiger' },
+        { name: '🌹', color: '#ff9ff3', shape: 'Rose' },
+        { name: '🔷', color: '#45b7d1', shape: 'diamond' },
+        { name: '🍔', color: '#EE4025', shape: 'Burger' },
+        { name: '🦜', color: '#E0B1D2', shape: 'Bird' }
     ];
 
-    const numShapes = Math.min(2 + level, 6);
+    const numShapes = Math.min(1 + level, 8);
     const selectedShapes = shapes.slice(0, numShapes);
 
     setupShapesLevel(selectedShapes);
@@ -749,6 +743,7 @@ function completeLevel(gameType) {
         // Unlock next games
         if (gameType === 'concentration') {
             gameState.shapes.locked = false;
+            gameState.letters.locked = false;
             gameState.letters.locked = false;
         }
 
@@ -993,6 +988,7 @@ function closeHistory() {
 function resetAllProgress() {
     if (confirm('Apakah kamu yakin ingin mengulang semua permainan dari awal? Progress saat ini akan disimpan dalam riwayat.')) {
         // Simpan progress saat ini sebelum reset
+        localStorage.clear();
         saveProgressSnapshot('Reset Progress');
 
         // Reset game state
@@ -1205,11 +1201,14 @@ function logout() {
     // Kembali ke halaman awal
     if (confirm("Apakah yakin ingin keluar?")) {
         // Kembali ke halaman awal
-        document.getElementById('welcome-screen').classList.add('hidden');
-        document.getElementById('main-menu').classList.remove('hidden');
+        playerName = '';
+        localStorage.clear();
+        //document.getElementById('welcome-screen').classList.add('hidden');
+        //document.getElementById('main-menu').classList.remove('hidden');
 
         // Tambahkan efek transisi yang smooth
         showScreen('welcome-screen')
+        resetAllProgress();
         document.getElementById('welcome-screen').style.animation = 'slideIn 0.8s ease-out';
     }
 }
@@ -1222,3 +1221,6 @@ document.addEventListener('click', function (e) {
         }, 150);
     }
 });
+
+localStorage.clear();
+updateUI();
