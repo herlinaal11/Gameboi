@@ -854,11 +854,29 @@ function showResults() {
     resultsContent.innerHTML = '';
 
     // Tambahkan tombol untuk melihat history
-    const historyButton = document.createElement('button');
-    historyButton.textContent = '';
-    historyButton.className = 'history-btn';
-    historyButton.onclick = showProgressHistory;
-    resultsContent.appendChild(historyButton);
+    //const historyButton = document.createElement('button');
+    //historyButton.textContent = '';
+    //historyButton.className = 'history-btn';
+    //historyButton.onclick = showProgressHistory;
+    //resultsContent.appendChild(historyButton);
+
+    //baru
+    const header = document.createElement('div');
+    header.className = 'result-header';
+    header.innerHTML = `
+        <h2>🎯 Hasil Permainan Kamu</h2>
+        <p>Halo, ${playerName} ! ini progress dan nilai belajarmu sejauh ini</p>
+        <div class="score-explanation">
+            <span>Nilai:</span>
+            <span class="score-A">A</span> (Cepat) → 
+            <span class="score-E">E</span> (Perlu Latihan)
+        </div>
+    `;
+    resultsContent.appendChild(header);
+
+    // Container untuk game cards - baru
+    const gamesContainer = document.createElement('div');
+    gamesContainer.className = 'games-container';
 
     ['concentration', 'shapes', 'letters'].forEach(gameType => {
         const game = gameState[gameType];
@@ -868,46 +886,88 @@ function showResults() {
             letters: 'Huruf & Angka'
         };
 
-        const resultCard = document.createElement('div');
-        resultCard.className = 'result-card';
-
-        let avgTime = 0;
-        if (game.times.length > 0) {
-            avgTime = game.times.reduce((a, b) => a + b, 0) / game.times.length;
-        }
-
+        //baru
         const maxLevels = gameType === 'concentration' ? 5 : 10;
+        const progress = (game.level / maxLevels) * 100;
+        const isCompleted = game.completed;
+        const score = calculateScore(gameType);
+        const scoreColor = getScoreColor(score);
 
-        // Tambahkan informasi perkembangan
-        const improvement = calculateGameImprovement(gameType);
-
-        resultCard.innerHTML = `
+        const gameCard = document.createElement('div');
+        gameCard.className = `game-result-card ${isCompleted ? 'completed' : ''}`;
+        gameCard.innerHTML = `
+    
+        <div class="game-icon">
+                ${gameType === 'concentration' ? '🎯' :
+                gameType === 'shapes' ? '🔷' : '🔤'}
+            </div>
             <h3>${gameNames[gameType]}</h3>
-            <p>Level Tertinggi: ${game.level - (game.completed ? 0 : 1)}/${maxLevels}</p>
-            <p>Status: ${game.completed ? '✅ Selesai' : game.locked ? '🔒 Terkunci' : '⏳ Dalam Progress'}</p>
-            <p>Rata-rata Waktu: ${game.times.length > 0 ? `${Math.floor(avgTime / 60)}:${(Math.floor(avgTime) % 60).toString().padStart(2, '0')}` : 'Belum ada data'}</p>
-            <p>Total Level Dimainkan: ${game.times.length}</p>
-            ${improvement ? `<p class="improvement">📈 ${improvement}</p>` : ''}
-        `;
+            
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <h4>${game.level}/${maxLevels} level</h4>
+                </div>
+                <div class="score-display" style="background: ${scoreColor}">
+                ${score}
+                </div>
+            
+            <div class="game-status">
+                ${isCompleted ? '✅ Selesai' : game.locked ? '🔒 Terkunci' : '🏃‍♂️ Dalam Progress'}
+            ${game.times.length > 0 ?
+                `<br>Rata: ${Math.floor(game.times.reduce((a, b) => a + b, 0) / game.times.length)} detik` : ''}
+            </div>
+            </div>
 
-        resultsContent.appendChild(resultCard);
+        `;
+        gamesContainer.appendChild(gameCard);
     });
 
-    // Tambahkan ringkasan total progress
-    const totalProgress = calculateTotalProgress();
-    const summaryCard = document.createElement('div');
-    summaryCard.className = 'result-card summary-card';
-    summaryCard.innerHTML = `
-        <h3>📊 Ringkasan Total</h3>
+    resultsContent.appendChild(gamesContainer);
+    showScreen('results-screen');
+}
+
+//const resultCard = document.createElement('div');
+//resultCard.className = 'result-card';
+
+//let avgTime = 0;
+//if (game.times.length > 0) {
+//  avgTime = game.times.reduce((a, b) => a + b, 0) / game.times.length;
+//}
+
+//const maxLevels = gameType === 'concentration' ? 5 : 10;
+
+// Tambahkan informasi perkembangan
+//const improvement = calculateGameImprovement(gameType);
+
+//resultCard.innerHTML = `
+//      < h3 > ${gameNames[gameType]}</h3 >
+//    <p>Level Tertinggi: ${game.level - (game.completed ? 0 : 1)}/${maxLevels}</p>
+//  <p>Status: ${game.completed ? '✅ Selesai' : game.locked ? '🔒 Terkunci' : '⏳ Dalam Progress'}</p>
+//<p>Rata-rata Waktu: ${game.times.length > 0 ? `${Math.floor(avgTime / 60)}:${(Math.floor(avgTime) % 60).toString().padStart(2, '0')}` : 'Belum ada data'}</p>
+//<p>Total Level Dimainkan: ${game.times.length}</p>
+//${improvement ? `<p class="improvement">📈 ${improvement}</p>` : ''}
+//`;
+
+//resultsContent.appendChild(resultCard);
+//});
+
+// Tambahkan ringkasan total progress
+const totalProgress = calculateTotalProgress();
+const summaryCard = document.createElement('div');
+summaryCard.className = 'result-card summary-card';
+summaryCard.innerHTML = `
+
+            < h3 >📊 Ringkasan Total</h3 >
         <p>Game Selesai: ${totalProgress.completedLevels}/3</p>
 
         <p>Total Level Dimainkan: ${totalProgress.totalLevels}</p>
         <p>Progress Keseluruhan: ${totalProgress.percentage}%</p>
-    `;
-    resultsContent.appendChild(summaryCard);
+        `;
+resultsContent.appendChild(summaryCard);
 
-    showScreen('results-screen');
-}
+showScreen('results-screen');
+//}
 
 // Fungsi untuk menghitung perkembangan game
 function calculateGameImprovement(gameType) {
@@ -937,8 +997,8 @@ function getCurrentDateTime() {
         'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
 
-    const date = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const date = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()} `;
+    const time = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')} `;
 
     return { date, time };
 }
@@ -957,14 +1017,14 @@ function showProgressHistory() {
 
 
         historyHTML += `
-            <div class="history-item">
+            < div class="history-item" >
                 <h4>${snapshot.date} - ${snapshot.time}</h4>
                 <p><strong>Status:</strong> ${snapshot.reason}</p>
                 <p><strong>Level Selesai:</strong> ${totalGames}</p>
                 <p><strong>Rata:</strong> ${completedGames}/3</p>
                 <p><strong>Progress:</strong> ${snapshot.totalProgress.percentage}%</p>
-            </div>
-        `;
+            </div >
+            `;
     });
 
     historyHTML += '<button onclick="closeHistory()">Tutup</button></div>';
@@ -988,7 +1048,7 @@ function closeHistory() {
 function resetAllProgress() {
     if (confirm('Apakah kamu yakin ingin mengulang semua permainan dari awal? Progress saat ini akan disimpan dalam riwayat.')) {
         // Simpan progress saat ini sebelum reset
-        localStorage.clear();
+
         saveProgressSnapshot('Reset Progress');
 
         // Reset game state
@@ -998,18 +1058,27 @@ function resetAllProgress() {
             letters: { level: 1, completed: false, times: [], locked: true }
         };
 
+        //reset playername
+        playerName = '';
+        document.getElementById('player-name').value = '';
+        localStorage.clear();
+
         // Simpan state baru
         saveProgressSnapshot('Progress Setelah Reset');
 
         updateUI();
-        alert('Semua progress telah di-reset! Progress sebelumnya disimpan dalam riwayat. Selamat bermain lagi! 🎮');
+        showScreen('welcome-screen');
 
-        // Perbaiki sintaks - hapus + yang tidak perlu
-        if (typeof startGame === 'function') {
-            startGame();
-        }
+        // Beri feedback visual
+        const welcomeScreen = document.getElementById('welcome-screen');
+        welcomeScreen.style.animation = 'none';
+        void welcomeScreen.offsetWidth; // Trigger reflow
+        welcomeScreen.style.animation = 'fadeIn 0.8s ease-out';
+
+        alert('Semua progress telah direset! Silakan mulai permainan baru.');
     }
 }
+
 
 // Fungsi untuk menyimpan progress manual
 function saveProgress() {
@@ -1022,7 +1091,7 @@ function restoreProgress(index) {
     if (index >= 0 && index < progressHistory.length) {
         const snapshot = progressHistory[index];
         gameState = JSON.parse(JSON.stringify(snapshot.gameState));
-        saveProgressSnapshot(`Restore dari ${snapshot.date}`);
+        saveProgressSnapshot(`Restore dari ${snapshot.date} `);
         updateUI();
         alert('Progress berhasil dipulihkan! 🔄');
     }
@@ -1045,7 +1114,7 @@ function onLevelComplete(gameType, time) {
     // Kode existing untuk menyelesaikan level...
 
     // Tambahkan penyimpanan otomatis
-    saveProgressSnapshot(`Level selesai - ${gameType}`);
+    saveProgressSnapshot(`Level selesai - ${gameType} `);
 }
 
 
@@ -1103,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     instructionItems.forEach((item, index) => {
         // Stagger animation on modal open
-        item.style.animationDelay = `${index * 0.1}s`;
+        item.style.animationDelay = `${index * 0.1} s`;
     });
 });
 
@@ -1140,6 +1209,9 @@ function initializeLearningGrids() {
     const lettersGrid = document.getElementById('lettersGrid');
     const numbersGrid = document.getElementById('numbersGrid');
 
+    lettersGrid.innerHTML = '';
+    numbersGrid.innerHTML = '';
+
     // Create letter buttons A-Z
     for (let i = 65; i <= 90; i++) {
         const letter = String.fromCharCode(i);
@@ -1174,11 +1246,12 @@ function playLearningSound(character, button) {
 function openLearningModal() {
     document.getElementById('learningModal').style.display = 'block';
     document.body.style.overflow = 'hidden';
+    initializeLearningGrids();
 }
 
 function closeLearningModal() {
     document.getElementById('learningModal').style.display = 'none';
-    document.body.style.overflow = 'auto';
+    document.body.style.overflow = 'hidden';
     synth.cancel(); // Stop any ongoing speech
 }
 
@@ -1221,6 +1294,48 @@ document.addEventListener('click', function (e) {
         }, 150);
     }
 });
+
+function calculateScore(gameType) {
+    const game = gameState[gameType];
+    if (game.times.length === 0) return '-';
+
+    // Hitung rata-rata waktu per level (dalam detik)
+    const avgTime = game.times.reduce((a, b) => a + b, 0) / game.times.length;
+
+    // Tentukan grade berdasarkan waktu
+    if (avgTime < 60) return 'A';      // < 1 menit
+    if (avgTime < 90) return 'B';      // 1-1.5 menit
+    if (avgTime < 120) return 'C';     // 1.5-2 menit
+    if (avgTime < 180) return 'D';     // 2-3 menit
+    return 'E';                        // > 3 menit
+}
+
+function getScoreColor(score) {
+    const colors = {
+        'A': '#48bb78', // Hijau
+        'B': '#38a169', // Hijau tua
+        'C': '#ecc94b', // Kuning
+        'D': '#ed8936', // Oranye
+        'E': '#e53e3e'  // Merah
+    };
+    return colors[score] || '#a0aec0';
+}
+
+function showResetConfirmation() {
+    const confirmation = document.createElement('div');
+    confirmation.className = 'reset-confirmation';
+    confirmation.innerHTML = `
+        <div class="reset-confirmation-content">
+            <h3>Reset Semua Progress?</h3>
+            <p>Semua level, nilai, dan riwayat akan dihapus permanen.</p>
+            <div class="confirmation-buttons">
+                <button class="btn btn-confirm" onclick="resetAllProgress()">Ya, Reset</button>
+                <button class="btn btn-cancel" onclick="this.parentElement.parentElement.remove()">Batal</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(confirmation);
+}
 
 localStorage.clear();
 updateUI();
