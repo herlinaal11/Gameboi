@@ -90,6 +90,31 @@ input:focus {
     margin: 10px;
     transition: transform 0.2s, box-shadow 0.2s;
     font-weight: bold;
+
+}
+
+.lg-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 20px 40px;
+    border-radius: 25px;
+    font-size: 20px;
+    cursor: pointer;
+    margin: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-weight: bold;
+    background: grey;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+
+}
+
+.lg-btn:hover {
+
+    background: #ee5a5a;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
 }
 
 .btn:hover {

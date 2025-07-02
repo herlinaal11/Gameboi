@@ -1281,7 +1281,6 @@ function logout() {
 
         // Tambahkan efek transisi yang smooth
         showScreen('welcome-screen')
-        resetAllProgress();
         document.getElementById('welcome-screen').style.animation = 'slideIn 0.8s ease-out';
     }
 }
@@ -1303,11 +1302,11 @@ function calculateScore(gameType) {
     const avgTime = game.times.reduce((a, b) => a + b, 0) / game.times.length;
 
     // Tentukan grade berdasarkan waktu
-    if (avgTime < 60) return 'A';      // < 1 menit
-    if (avgTime < 90) return 'B';      // 1-1.5 menit
-    if (avgTime < 120) return 'C';     // 1.5-2 menit
-    if (avgTime < 180) return 'D';     // 2-3 menit
-    return 'E';                        // > 3 menit
+    if (avgTime < 300) return 'A';      // < 5 menit
+    if (avgTime < 600) return 'B';      // 6-10 menit
+    if (avgTime < 900) return 'C';     // 10-15 menit
+    if (avgTime < 1200) return 'D';     // 15-20 menit
+    return 'E';                        // > 20 menit
 }
 
 function getScoreColor(score) {
