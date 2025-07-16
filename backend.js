@@ -267,18 +267,19 @@ function setupConcentrationGame() {
 
     // Insert kategori indicator sebelum container
     container.parentNode.insertBefore(categoryIndicator, container);
+    const isMobile = window.innerWidth < 600;
 
     // Set container menjadi horizontal dengan responsivitas
     container.style.cssText = `
         display: flex;
-        flex-direction: row;
+        flex-direction: ${isMobile ? 'column' : 'row'};
         justify-content: center;
         align-items: center;
         flex-wrap: ${numShapes > 5 ? 'wrap' : 'nowrap'};
-        gap: ${numShapes > 5 ? '20px' : '30px'};
-        padding: 60px;
+        gap: ${isMobile ? '15px' : (numShapes > 5 ? '20px' : '30px')};
+        padding:${isMobile ? '20px' : '60px'};
         min-height: 200px;
-        max-width: 150%;
+        max-width: 100%;
         overflow-x: auto;
     `;
 
@@ -286,11 +287,13 @@ function setupConcentrationGame() {
         const shape = selectedShapes[i];
         const shapeElement = document.createElement('div');
         shapeElement.className = 'shape-circle';
+        const shapeSize = isMobile ? '120px' : '190px';
+        const fontSize = isMobile ? '70px' : '110px';
 
         // Styling untuk container bentuk - horizontal layout
         shapeElement.style.cssText = `
-            width: 190px;
-            height: 190px;
+            width: ${shapeSize};
+            height: ${shapeSize};
             border-radius: 50%;
             background-color: ${shape.color};
             border: 4px solid #ffffff;
@@ -298,7 +301,7 @@ function setupConcentrationGame() {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 110px;
+            font-size: ${fontSize};
             cursor: pointer;
             transition: all 0.3s ease;
             user-select: none;
@@ -418,6 +421,9 @@ function showNextTarget() {
             playEncouragementSound(); // Bunyi saat muncul target
         }
     }, 500);
+
+
+
 }
 
 function checkClick(clickedIndex) {
@@ -1177,9 +1183,31 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 const synth = window.speechSynthesis;
+let voicesReady = false;
+
+// Fungsi untuk memuat voices
+function loadVoices() {
+    if (!synth) {
+        console.error('Speech synthesis not supported');
+        return;
+    }
+
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+        voicesReady = true;
+    }
+}
+
+// Event listener untuk ketika voices siap
+synth.onvoiceschanged = loadVoices;
+loadVoices();
 
 function speak(text) {
 
+    if (!synth || !voicesReady) {
+        console.error('Speech synthesis not ready');
+        return;
+    }
     synth.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -1190,18 +1218,14 @@ function speak(text) {
         voice.name.toLowerCase().includes('indonesia') ||
         voice.name.toLowerCase().includes('bahasa')
     );
-    if (indonesianVoice) {
-        utterance.voice = indonesianVoice;
-    }
     utterance.lang = 'id-ID'; // Indonesian language
     utterance.rate = 0.6; // Slower, more deliberate pace
     utterance.pitch = 1.1; // Slightly higher pitch for friendliness
     utterance.volume = 0.9; // Slightly softer volume
 
     // Add a small delay to ensure clarity
-    setTimeout(() => {
-        synth.speak(utterance);
-    }, 100);
+    synth.speak(utterance);
+
 }
 
 // Initialize learning grids
@@ -1218,7 +1242,10 @@ function initializeLearningGrids() {
         const button = document.createElement('button');
         button.className = 'learning-item';
         button.textContent = letter;
-        button.onclick = () => playLearningSound(letter, button);
+        button.onclick = () => {
+            playLearningSound(letter, button);
+            speak(letter);
+        };
         lettersGrid.appendChild(button);
     }
 
@@ -1227,7 +1254,11 @@ function initializeLearningGrids() {
         const button = document.createElement('button');
         button.className = 'learning-item';
         button.textContent = i.toString();
-        button.onclick = () => playLearningSound(i.toString(), button);
+        button.onclick = () => {
+            playLearningSound(i.toString(), button);
+            speak(i.toString());
+
+        };
         numbersGrid.appendChild(button);
     }
 }
@@ -1270,30 +1301,72 @@ document.addEventListener('keydown', function (e) {
 
 });
 
-function logout() {
-    // Kembali ke halaman awal
-    if (confirm("Apakah yakin ingin keluar?")) {
-        // Kembali ke halaman awal
-        playerName = '';
-        localStorage.clear();
-        //document.getElementById('welcome-screen').classList.add('hidden');
-        //document.getElementById('main-menu').classList.remove('hidden');
+function resetGameState() {
+    gameState = {
+        concentration: { level: 1, completed: false, times: [], locked: false },
+        shapes: { level: 1, completed: false, times: [], locked: true },
+        letters: { level: 1, completed: false, times: [], locked: true }
+    };
+    playerName = '';
+    document.getElementById('player-name').value = '';
+    localStorage.clear();
+}
 
-        // Tambahkan efek transisi yang smooth
-        showScreen('welcome-screen')
-        document.getElementById('welcome-screen').style.animation = 'slideIn 0.8s ease-out';
+function goToWelcomeScreen() {
+    // Hentikan semua proses game yang berjalan
+    stopTimer();
+    gameActive = false;
+
+    // Sembunyikan semua screen
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+
+    // Tampilkan welcome screen
+    document.getElementById('welcome-screen').classList.add('active');
+
+    // Reset form input
+    document.getElementById('player-name').value = '';
+
+    // Scroll ke atas halaman
+    window.scrollTo(0, 0);
+}
+
+
+function logout() {
+    if (confirm("Apakah yakin ingin keluar?")) {
+        // Simpan progress saat ini sebelum reset
+
+        resetGameState();
+        // Kembali ke welcome screen dengan benar
+        goToWelcomeScreen();
+
+        // Reset game state
+        gameState = {
+            concentration: { level: 1, completed: false, times: [], locked: false },
+            shapes: { level: 1, completed: false, times: [], locked: true },
+            letters: { level: 1, completed: false, times: [], locked: true }
+        };
+
+        // Reset player name
+        playerName = '';
+        document.getElementById('player-name').value = '';
+
+        // Clear local storage
+        localStorage.removeItem('gameState');
+        localStorage.removeItem('gameProgressHistory');
+
+        // Kembali ke welcome screen
+        showScreen('welcome-screen');
+        document.getElementById('welcome-screen').classList.add('active');
+
+        // Reset timer jika aktif
+        stopTimer();
+
+        // Update UI
+        updateUI();
     }
 }
-document.addEventListener('click', function (e) {
-    if (e.target.tagName === 'BUTTON') {
-        // Efek visual saat button diklik
-        e.target.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            e.target.style.transform = '';
-        }, 150);
-    }
-});
-
 function calculateScore(gameType) {
     const game = gameState[gameType];
     if (game.times.length === 0) return '-';
@@ -1338,3 +1411,30 @@ function showResetConfirmation() {
 
 localStorage.clear();
 updateUI();
+
+// Tambahkan di bagian akhir file
+function checkOrientation() {
+    if (window.innerHeight > window.innerWidth) {
+        // Portrait mode
+        if (currentGame === 'concentration') {
+            const container = document.getElementById('circles-container');
+            if (container) {
+                container.style.flexDirection = 'column';
+                container.style.gap = '10px';
+            }
+        }
+    } else {
+        // Landscape mode
+        if (currentGame === 'concentration') {
+            const container = document.getElementById('circles-container');
+            if (container) {
+                container.style.flexDirection = 'row';
+                container.style.gap = '20px';
+            }
+        }
+    }
+}
+
+// Panggil saat load dan saat orientasi berubah
+window.addEventListener('load', checkOrientation);
+window.addEventListener('resize', checkOrientation);
