@@ -10,6 +10,24 @@
 </head>
 
 <body>
+
+    <div class="music-control">
+        <button id="musicToggle" class="music-btn">
+            <span class="icon-play">🎵</span>
+            <span class="icon-mute" style="display:none;">🔇</span>
+        </button>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="bgMusic" loop></audio>
+
+    <!-- Audio Element -->
+    <audio id="bgMusic" loop volume="0.5"></audio>
+
+
+
+
+
     <script src="backend.js"></script>
     <button class="btn-help" onclick="openModal()">
         📖 Cara Bermain
@@ -33,38 +51,59 @@
 
 
 
+
         <!-- Main Menu -->
         <div id="main-menu" class="screen">
 
-
-
             <h1>Halo, <span id="player-name-display"></span>! 👋</h1>
-            <p style="margin-bottom: 30px;">Pilih permainan yang ingin kamu mainkan:</p>
+            <p style="margin-bottom: 30px; font-size: 2em;">Pilih permainan yang ingin kamu mainkan:</p>
 
             <div class="game-menu">
+                <div class="category-box">
+                    <div class="category-title">🎯 Game untuk Anak Low Visual</div>
 
-                <div class="game-card" onclick="selectGame('concentration')">
-                    <h3>🎯 Konsentrasi & Fokus</h3>
-                    <p>Latih konsentrasi dengan mengikuti pola warna yang muncul</p>
-                    <div class="level-indicator">Level: <span id="concentration-level">1</span>/5</div>
-                </div>
+                    <div class="game-card" onclick="selectGame('concentration')">
+                        <h3>🎯 Konsentrasi & Fokus</h3>
+                        <p>Latih konsentrasi dengan mengikuti pola warna yang muncul</p>
+                        <div class="level-indicator">Level: <span id="concentration-level">1</span>/5</div>
+                    </div>
 
-                <div class="game-card" id="shapes-card" onclick="selectGame('shapes')">
-                    <h3>🔷 Bentuk & Warna</h3>
-                    <p>Seret dan letakkan bentuk sesuai dengan tempatnya</p>
-                    <div class="level-indicator">Level: <span id="shapes-level">1</span>/10</div>
-                </div>
-
-                <div class="game-card" id="letters-card" onclick="selectGame('letters')">
-                    <h3>🔤 Huruf & Angka</h3>
-                    <p>Belajar mengenal huruf dan angka dengan menyenangkan</p>
-                    <div class="level-indicator">Level: <span id="letters-level">1</span>/10</div>
                 </div>
 
 
+                <div class="category-box">
+                    <div class="category-title">🎯 Game untuk Anak ADHD</div>
 
+                    <div class="game-card" id="memory-card" onclick="selectGame('memory')">
+                        <h3>🏅 Memori </h3>
+                        <p>Cocokan tiap gambar yang tersembunyi</p>
+                        <div class="level-indicator">Level: <span id="shapes-level">1</span>/10</div>
+                    </div>
+
+                    <br>
+
+                    <div class="game-card" id="shapes-card" onclick="selectGame('shapes')">
+                        <h3>🔷 Bentuk & Warna</h3>
+                        <p>Seret dan letakkan bentuk sesuai dengan tempatnya</p>
+                        <div class="level-indicator">Level: <span id="shapes-level">1</span>/10</div>
+                    </div>
+
+                </div>
+
+                <div class="category-box">
+                    <div class="category-title">🎯 Game untuk Anak Speech Delay</div>
+
+                    <div class="game-card" id="letters-card" onclick="selectGame('letters')">
+                        <h3>🔤 Huruf & Angka</h3>
+                        <p>Belajar mengenal huruf dan angka dengan menyenangkan</p>
+                        <div class="level-indicator">Level: <span id="letters-level">1</span>/10</div>
+                    </div>
+
+                </div>
             </div>
+
             <button class="btn" onclick="showResults()">📊 Lihat Hasil</button>
+
         </div>
 
         <!-- Concentration Game -->
@@ -87,6 +126,53 @@
                         <button class="btn" id="start-sequence-btn" onclick="startSequence()">🌟 Mulai</button>
                         <button class="btn" onclick="backToMenu()">🏠 Kembali</button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memory Game -->
+        <div id="memory-game" class="screen">
+            <h2>🎯 Memory Match - Level <span id="current-memory-level">1</span></h2>
+            <p>Temukan pasangan kartu yang sama!</p>
+
+            <div class="progress-bar">
+                <div id="memory-progress" class="progress-fill"></div>
+            </div>
+
+            <div class="game-area">
+                <!-- Stats Container -->
+                <div class="memory-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Skor</div>
+                        <div id="memory-score" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Gerakan</div>
+                        <div id="memory-moves" class="stat-value">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Waktu</div>
+                        <div id="memory-time" class="stat-value time-normal">60s</div>
+                    </div>
+                    <button class="btn-small" onclick="toggleMemorySound()">
+                        <span id="memory-sound-icon">🔊</span>
+                    </button>
+                </div>
+
+                <!-- Progress Text -->
+                <p id="memory-progress-text" style="text-align: center; margin: 10px 0; color: #64748b;">
+                    0 dari 8 pasangan ditemukan
+                </p>
+
+                <!-- Cards Grid -->
+                <div id="memory-cards-grid" class="memory-grid">
+                    <!-- Cards akan di-generate oleh JavaScript -->
+                </div>
+
+                <!-- Buttons -->
+                <div style="margin-top: 30px;">
+                    <button class="btn" onclick="resetMemoryLevel()">🔄 Ulang</button>
+                    <button class="btn" onclick="backToMenu()">🏠 Kembali</button>
                 </div>
             </div>
         </div>
@@ -163,46 +249,53 @@
                     <div class="instructions-content">
                         <div class="instruction-item">
                             <span class="instruction-number">1</span>
-                            <strong>Level 1-5:</strong> Pemain wajib menyelesaikan game pertama yaitu konsentrasi dan
+                            <strong>Level 1-5:</strong> Pemain wajib menyelesaikan game pertama yaitu
+                            konsentrasi dan
                             fokus
                             level 1 sampai 5
                         </div>
 
                         <div class="instruction-item">
                             <span class="instruction-number">2</span>
-                            <strong>Konsentrasi & Fokus:</strong> Pada game konsentrasi dan fokus pemain diminta memilih
+                            <strong>Konsentrasi & Fokus:</strong> Pada game konsentrasi dan fokus pemain diminta
+                            memilih
                             tombol mana yang menyala oleh karna itu harus fokus pada layar saat bermain
                         </div>
 
                         <div class="instruction-item">
                             <span class="instruction-number">3</span>
-                            <strong>Lanjut ke Game 2-3:</strong> Setelah menyelesaikan Game pertama pemain dapat memilih
+                            <strong>Lanjut ke Game 2-3:</strong> Setelah menyelesaikan Game pertama pemain dapat
+                            memilih
                             mencoba game 2 atau 3 terlebih dahulu
                         </div>
 
                         <div class="instruction-item">
                             <span class="instruction-number">4</span>
-                            <strong>Pencocokan Warna:</strong> Game kedua berisi pencocokan pada bentuk dan warna dengan
+                            <strong>Pencocokan Warna:</strong> Game kedua berisi pencocokan pada bentuk dan
+                            warna dengan
                             menarik objek yang berada di atas pindahkan ke dalam kotak
                         </div>
 
                         <div class="instruction-item">
                             <span class="instruction-number">5</span>
-                            <strong>Pengenalan Huruf:</strong> Game ketiga berisi pengenalan huruf dan angka melalui
+                            <strong>Pengenalan Huruf:</strong> Game ketiga berisi pengenalan huruf dan angka
+                            melalui
                             bentuk
                             dengan memilih yang sama dengan soal
                         </div>
 
                         <div class="instruction-item">
                             <span class="instruction-number">6</span>
-                            <strong>Kembali ke Menu:</strong> Saat game dimulai pemain bisa kembali ke halaman menu
+                            <strong>Kembali ke Menu:</strong> Saat game dimulai pemain bisa kembali ke halaman
+                            menu
                             tetapi
                             waktu akan ke reset otomatis atau akan dihitung ulang saat bermain kembali
                         </div>
 
                         <div class="instruction-item">
                             <span class="instruction-number">7</span>
-                            <strong>Hasil Permainan:</strong> Jika sudah menyelesaikan semua pemain bisa melihat hasil
+                            <strong>Hasil Permainan:</strong> Jika sudah menyelesaikan semua pemain bisa melihat
+                            hasil
                             permainan dengan mengklik tombol yang ada di bawah
                         </div>
                     </div>

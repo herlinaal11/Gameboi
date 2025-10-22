@@ -2,8 +2,9 @@
 let playerName = '';
 let gameState = {
     concentration: { level: 1, completed: false, times: [], locked: false },
-    shapes: { level: 1, completed: false, times: [], locked: true },
-    letters: { level: 1, completed: false, times: [], locked: true }
+    shapes: { level: 1, completed: false, times: [], locked: false },
+    letters: { level: 1, completed: false, times: [], locked: false },
+    memory: { level: 1, completed: false, times: [], locked: false }
 };
 
 let currentGame = '';
@@ -79,7 +80,16 @@ function startGame() {
 
     showScreen('main-menu');
     updateUI();
+    changeMusic('menu'); //update baru
+
+    if (!isMusicPlaying) {
+        bgMusic.play().then(() => {
+            isMusicPlaying = true;
+            updateMusicButton();
+        }).catch(err => console.log('Play error:', err));
+    }
 }
+
 
 
 // Show screen
@@ -133,11 +143,13 @@ function updateUI() {
     document.getElementById('concentration-level').textContent = gameState.concentration.level;
     document.getElementById('shapes-level').textContent = gameState.shapes.level;
     document.getElementById('letters-level').textContent = gameState.letters.level;
+    document.getElementById('memory-level').textContent = gameState.memory.level;
 
 
     // Lock/unlock games
     const shapesCard = document.getElementById('shapes-card');
     const lettersCard = document.getElementById('letters-card');
+    const memoryCard = document.getElementById('memory-card');
 
 
     if (shapesCard) {
@@ -148,16 +160,25 @@ function updateUI() {
             shapesCard.classList.remove('locked');
             shapesCard.onclick = () => selectGame('shapes');
         }
-    }
 
-    if (gameState.letters.locked) {
-        lettersCard.classList.add('locked');
-        lettersCard.onclick = null;
-    } else {
-        lettersCard.classList.remove('locked');
-        lettersCard.onclick = () => selectGame('letters');
-    }
 
+        if (gameState.letters.locked) {
+            lettersCard.classList.add('locked');
+            lettersCard.onclick = null;
+        } else {
+            lettersCard.classList.remove('locked');
+            lettersCard.onclick = () => selectGame('letters');
+
+        }
+
+        if (gameState.memory.locked) {
+            shapesCard.classList.add('locked');
+            shapesCard.onclick = null;
+        } else {
+            shapesCard.classList.remove('locked');
+            shapesCard.onclick = () => selectGame('memory');
+        }
+    }
 
 }
 
@@ -176,6 +197,10 @@ function selectGame(game) {
         case 'concentration':
             showScreen('concentration-game');
             setupConcentrationGame();
+            break;
+        case 'memory':
+            showScreen('memory-game');
+            setupMemoryGame();
             break;
         case 'shapes':
             showScreen('shapes-game');
@@ -524,6 +549,260 @@ function createSuccessParticles(element) {
         }).onfinish = () => particle.remove();
     }
 }
+
+//Memory Game
+
+// Memory Match Game - Konsentrasi & Fokus
+
+// Game State untuk Memory Match
+const memoryGameState = {
+    emojis: ['🐶', '🐱', '🐼', '🦁', '🐸', '🦋', '🌟', '🎈'],
+    cards: [],
+    flippedCards: [],
+    matchedCards: [],
+    moves: 0,
+    score: 0,
+    gameWon: false,
+    soundOn: true,
+    timeLeft: 60,
+    gameStarted: false,
+    timerInterval: null
+};
+
+// Setup Memory Match Game
+function setupMemoryGame() {
+    const level = gameState.concentration.level;
+    const levelElement = document.getElementById('current-memory-level');
+    if (levelElement) {
+        levelElement.textContent = level;
+    }
+    updateProgress('concentration', level);
+
+    // Clear timer jika ada
+    if (memoryGameState.timerInterval) {
+        clearInterval(memoryGameState.timerInterval);
+        memoryGameState.timerInterval = null;
+    }
+
+    // Shuffle dan create cards
+    const shuffledEmojis = [...memoryGameState.emojis, ...memoryGameState.emojis]
+        .sort(() => Math.random() - 0.5)
+        .map((emoji, index) => ({
+            id: index,
+            emoji: emoji,
+            isFlipped: false,
+            isMatched: false
+        }));
+
+    memoryGameState.cards = shuffledEmojis;
+    memoryGameState.flippedCards = [];
+    memoryGameState.matchedCards = [];
+    memoryGameState.moves = 0;
+    memoryGameState.score = 0;
+    memoryGameState.gameWon = false;
+    memoryGameState.timeLeft = 60;
+    memoryGameState.gameStarted = false;
+
+    renderMemoryCards();
+    updateMemoryUI();
+}
+
+// Render Memory Cards
+function renderMemoryCards() {
+    const cardsGrid = document.getElementById('memory-cards-grid');
+    if (!cardsGrid) {
+        console.error('memory-cards-grid not found');
+        return;
+    }
+
+    cardsGrid.innerHTML = '';
+
+    memoryGameState.cards.forEach(card => {
+        const cardElement = document.createElement('button');
+        cardElement.className = 'memory-card';
+        cardElement.id = `memory-card-${card.id}`;
+        cardElement.dataset.cardId = card.id;
+        cardElement.textContent = '❓';
+        cardElement.addEventListener('click', () => handleMemoryCardClick(card.id));
+        cardsGrid.appendChild(cardElement);
+    });
+}
+
+// Handle Memory Card Click
+function handleMemoryCardClick(cardId) {
+    // Start timer on first click
+    if (!memoryGameState.gameStarted) {
+        memoryGameState.gameStarted = true;
+        startMemoryTimer();
+    }
+
+    // Check if card can be clicked
+    if (memoryGameState.flippedCards.length >= 2) return;
+    if (memoryGameState.flippedCards.includes(cardId)) return;
+    if (memoryGameState.matchedCards.includes(cardId)) return;
+    if (memoryGameState.gameWon) return;
+    if (memoryGameState.timeLeft === 0) return;
+
+    // Flip card
+    memoryGameState.flippedCards.push(cardId);
+
+    // Update card display
+    const cardElement = document.getElementById(`memory-card-${cardId}`);
+    const card = memoryGameState.cards.find(c => c.id === cardId);
+
+    if (cardElement && card) {
+        cardElement.textContent = card.emoji;
+        cardElement.classList.add('flipped');
+    }
+
+    // Check for match when 2 cards are flipped
+    if (memoryGameState.flippedCards.length === 2) {
+        memoryGameState.moves++;
+        updateMemoryUI();
+
+        const [firstId, secondId] = memoryGameState.flippedCards;
+        const firstCard = memoryGameState.cards.find(c => c.id === firstId);
+        const secondCard = memoryGameState.cards.find(c => c.id === secondId);
+
+        if (firstCard.emoji === secondCard.emoji) {
+            // Match found
+            setTimeout(() => {
+                memoryGameState.matchedCards.push(firstId, secondId);
+                memoryGameState.score += 10;
+                memoryGameState.flippedCards = [];
+
+                // Mark cards as matched
+                const card1 = document.getElementById(`memory-card-${firstId}`);
+                const card2 = document.getElementById(`memory-card-${secondId}`);
+
+                if (card1 && card2) {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                }
+
+                updateMemoryUI();
+
+                // Play success sound if available
+                if (typeof playSuccessSound === 'function') {
+                    playSuccessSound();
+                }
+
+                // Check win condition
+                if (memoryGameState.matchedCards.length === memoryGameState.cards.length) {
+                    memoryGameState.gameWon = true;
+                    if (memoryGameState.timerInterval) {
+                        clearInterval(memoryGameState.timerInterval);
+                    }
+                    if (typeof completeLevel === 'function') {
+                        completeLevel('concentration');
+                    }
+                }
+            }, 500);
+        } else {
+            // No match
+            setTimeout(() => {
+                // Flip cards back
+                const card1 = document.getElementById(`memory-card-${firstId}`);
+                const card2 = document.getElementById(`memory-card-${secondId}`);
+
+                if (card1 && card2) {
+                    card1.textContent = '❓';
+                    card2.textContent = '❓';
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                }
+
+                // Clear flipped cards array
+                memoryGameState.flippedCards = [];
+
+                // Play encouragement sound if available
+                if (typeof playEncouragementSound === 'function') {
+                    playEncouragementSound();
+                }
+            }, 1000);
+        }
+    }
+}
+
+// Start Memory Timer
+function startMemoryTimer() {
+    memoryGameState.timerInterval = setInterval(() => {
+        if (memoryGameState.timeLeft > 0 && !memoryGameState.gameWon) {
+            memoryGameState.timeLeft--;
+            updateMemoryTimeDisplay();
+
+            if (memoryGameState.timeLeft === 0) {
+                clearInterval(memoryGameState.timerInterval);
+                showMemoryTimeUpModal();
+            }
+        }
+    }, 1000);
+}
+
+// Update Memory UI
+function updateMemoryUI() {
+    const scoreElement = document.getElementById('memory-score');
+    const movesElement = document.getElementById('memory-moves');
+
+    if (scoreElement) scoreElement.textContent = memoryGameState.score;
+    if (movesElement) movesElement.textContent = memoryGameState.moves;
+
+    updateMemoryTimeDisplay();
+    updateMemoryProgress();
+}
+
+function updateMemoryTimeDisplay() {
+    const timeElement = document.getElementById('memory-time');
+    if (!timeElement) return;
+
+    timeElement.textContent = memoryGameState.timeLeft + 's';
+    timeElement.classList.remove('time-low', 'time-normal');
+
+    if (memoryGameState.timeLeft < 40) {
+        timeElement.classList.add('time-low');
+    } else {
+        timeElement.classList.add('time-normal');
+    }
+}
+
+function updateMemoryProgress() {
+    const progressBar = document.getElementById('memory-progress');
+    const progressText = document.getElementById('memory-progress-text');
+
+    if (progressBar) {
+        const progress = (memoryGameState.matchedCards.length / memoryGameState.cards.length) * 100;
+        progressBar.style.width = progress + '%';
+    }
+
+    if (progressText) {
+        const pairsFound = memoryGameState.matchedCards.length / 2;
+        const totalPairs = memoryGameState.cards.length / 2;
+        progressText.textContent = `${pairsFound} dari ${totalPairs} pasangan ditemukan`;
+    }
+}
+
+// Show Memory Time Up Modal
+function showMemoryTimeUpModal() {
+    alert('⏰ Waktu Habis! Coba lagi ya!');
+    resetMemoryLevel();
+}
+
+// Reset Memory Level
+function resetMemoryLevel() {
+    setupMemoryGame();
+}
+
+// Sound Toggle untuk Memory Game
+function toggleMemorySound() {
+    memoryGameState.soundOn = !memoryGameState.soundOn;
+    const soundIcon = document.getElementById('memory-sound-icon');
+    if (soundIcon) {
+        soundIcon.textContent = memoryGameState.soundOn ? '🔊' : '🔇';
+    }
+}
+
 // Shapes Game
 function setupShapesGame() {
     const level = gameState.shapes.level;
@@ -735,6 +1014,8 @@ function completeLevel(gameType) {
             successDiv.remove();
             if (gameType === 'concentration') {
                 setupConcentrationGame();
+            } else if (gameType === 'memory') {
+                setupShapesGame();
             } else if (gameType === 'shapes') {
                 setupShapesGame();
             } else if (gameType === 'letters') {
@@ -750,7 +1031,7 @@ function completeLevel(gameType) {
         if (gameType === 'concentration') {
             gameState.shapes.locked = false;
             gameState.letters.locked = false;
-            gameState.letters.locked = false;
+            gameState.memory.locked = false;
         }
 
         alert(`🎊 Selamat! Kamu telah menyelesaikan semua level ${gameType === 'concentration' ? 'Konsentrasi & Fokus' : gameType}!`);
@@ -771,7 +1052,12 @@ function updateProgress(gameType, level) {
 function backToMenu() {
     stopTimer();
     showScreen('main-menu');
+    changeMusic('menu');
     updateUI();
+
+    changeMusic('menu');
+
+
 }
 
 function downloadReport() {
@@ -884,12 +1170,13 @@ function showResults() {
     const gamesContainer = document.createElement('div');
     gamesContainer.className = 'games-container';
 
-    ['concentration', 'shapes', 'letters'].forEach(gameType => {
+    ['concentration', 'memory', 'shapes', 'letters'].forEach(gameType => {
         const game = gameState[gameType];
         const gameNames = {
             concentration: 'Konsentrasi & Fokus',
             shapes: 'Bentuk & Warna',
-            letters: 'Huruf & Angka'
+            letters: 'Huruf & Angka',
+            memory: 'Memori'
         };
 
         //baru
@@ -905,7 +1192,8 @@ function showResults() {
     
         <div class="game-icon">
                 ${gameType === 'concentration' ? '🎯' :
-                gameType === 'shapes' ? '🔷' : '🔤'}
+                gameType === 'memory' ? '🏅' :
+                    gameType === 'shapes' ? '🔷' : '🔤 '}
             </div>
             <h3>${gameNames[gameType]}</h3>
             
@@ -931,6 +1219,8 @@ function showResults() {
 
     resultsContent.appendChild(gamesContainer);
     showScreen('results-screen');
+
+    changeMusic('result');
 }
 
 //const resultCard = document.createElement('div');
@@ -1438,3 +1728,135 @@ function checkOrientation() {
 // Panggil saat load dan saat orientasi berubah
 window.addEventListener('load', checkOrientation);
 window.addEventListener('resize', checkOrientation);
+
+
+// ============= MUSIC SYSTEM =============
+const musicConfig = {
+    'welcome': 'music/Welcome_music.mp3',     // Musik untuk welcome screen
+    'menu': 'music/menu_music.mp3',           // Musik untuk main menu
+    'result': 'music/result_music.mp3'        // Musik untuk halaman hasil
+};
+
+const musicToggle = document.getElementById('musicToggle');
+const bgMusic = document.getElementById('bgMusic');
+const playingIcon = document.querySelector('.music-icon.playing');
+const mutedIcon = document.querySelector('.music-icon.muted');
+
+let isMusicPlaying = false;
+let currentScreen = 'welcome';
+
+// Fungsi untuk update tampilan button
+function updateMusicButton() {
+    if (isMusicPlaying) {
+        playingIcon.style.display = 'block';
+        mutedIcon.style.display = 'none';
+        musicToggle.classList.add('is-playing');
+        musicToggle.classList.remove('is-muted');
+    } else {
+        playingIcon.style.display = 'none';
+        mutedIcon.style.display = 'block';
+        musicToggle.classList.remove('is-playing');
+        musicToggle.classList.add('is-muted');
+    }
+}
+
+// Fungsi untuk mengganti musik berdasarkan halaman
+function changeMusic(screenName) {
+    currentScreen = screenName;
+    const newMusicSrc = musicConfig[screenName];
+
+    if (!newMusicSrc) {
+        console.log('Musik tidak ditemukan untuk screen:', screenName);
+        return;
+    }
+
+    console.log('Mengganti musik ke:', screenName);
+
+    // Cek apakah musik perlu diganti
+    const currentSrc = bgMusic.src.split('/').pop();
+    const newSrc = newMusicSrc.split('/').pop();
+
+    if (currentSrc !== newSrc) {
+        const wasPlaying = isMusicPlaying;
+
+        bgMusic.src = newMusicSrc;
+
+        // Jika musik sedang playing, otomatis play musik baru
+        if (wasPlaying) {
+            bgMusic.play().catch(err => {
+                console.log('Autoplay prevented:', err);
+            });
+        }
+    }
+}
+
+// Toggle musik ON/OFF
+musicToggle.addEventListener('click', () => {
+    if (isMusicPlaying) {
+        // Matikan musik
+        bgMusic.pause();
+        isMusicPlaying = false;
+        updateMusicButton();
+        console.log('Musik dimatikan');
+    } else {
+        // Nyalakan musik
+        bgMusic.play()
+            .then(() => {
+                isMusicPlaying = true;
+                updateMusicButton();
+                console.log('Musik dinyalakan');
+            })
+            .catch(error => {
+                console.error('Error playing music:', error);
+                alert('Tidak dapat memutar musik. Pastikan file musik tersedia!');
+            });
+    }
+});
+
+// Event listener untuk sinkronisasi status
+bgMusic.addEventListener('play', () => {
+    isMusicPlaying = true;
+    updateMusicButton();
+});
+
+bgMusic.addEventListener('pause', () => {
+    isMusicPlaying = false;
+    updateMusicButton();
+});
+
+// Auto-play musik saat halaman dimuat
+window.addEventListener('DOMContentLoaded', () => {
+    console.log('Halaman dimuat, memulai musik welcome...');
+
+    // Set musik awal
+    changeMusic('welcome');
+
+    // Auto-play musik welcome (akan diblok oleh browser, tapi akan play setelah user interact)
+    bgMusic.play()
+        .then(() => {
+            isMusicPlaying = true;
+            updateMusicButton();
+            console.log('Musik welcome otomatis diputar');
+        })
+        .catch(err => {
+            console.log('Autoplay diblok oleh browser. Musik akan diputar setelah user berinteraksi.');
+            // Musik akan otomatis play saat user klik tombol "Mulai Bermain"
+        });
+});
+
+// Auto-play musik saat user berinteraksi pertama kali
+document.addEventListener('click', function autoPlayOnce() {
+    if (!isMusicPlaying && bgMusic.paused) {
+        bgMusic.play()
+            .then(() => {
+                isMusicPlaying = true;
+                updateMusicButton();
+                console.log('Musik diputar setelah interaksi pertama');
+            })
+            .catch(err => console.log('Gagal autoplay:', err));
+    }
+    // Hapus listener setelah dijalankan sekali
+    document.removeEventListener('click', autoPlayOnce);
+}, { once: true });
+
+// ============= UPDATE FUNGSI YANG SUDAH ADA =============
